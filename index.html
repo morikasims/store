@@ -15,6 +15,7 @@
       --accent-color: #8b5cf6; /* Нежно-фиолетовый акцент */
       --accent-hover: #7c3aed;
       --button-text: #ffffff;
+      --da-color: #f57c00; /* Оранжевый акцент для DonationAlerts */
     }
 
     * {
@@ -59,7 +60,7 @@
     .donate-card p {
       font-size: 13px;
       color: var(--hint-color);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       line-height: 1.45;
     }
 
@@ -118,7 +119,7 @@
       font-size: 14px;
     }
 
-    /* Главная кнопка */
+    /* Главная кнопка Stars */
     .donate-btn {
       background-color: var(--accent-color);
       color: var(--button-text);
@@ -139,6 +140,54 @@
     .donate-btn:active {
       background-color: var(--accent-hover);
     }
+
+    /* Разделитель */
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: var(--hint-color);
+      font-size: 12px;
+      margin: 20px 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .divider:not(:empty)::before {
+      margin-right: .8em;
+    }
+
+    .divider:not(:empty)::after {
+      margin-left: .8em;
+    }
+
+    /* Альтернативная кнопка (DonationAlerts) */
+    .da-btn {
+      background: rgba(245, 124, 0, 0.12);
+      color: #ffb74d;
+      border: 1px solid rgba(245, 124, 0, 0.3);
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .da-btn:active {
+      background: rgba(245, 124, 0, 0.25);
+    }
   </style>
 </head>
 <body>
@@ -146,9 +195,9 @@
   <div class="donate-card">
     <div class="avatar">☕</div>
     <h1>Поддержать автора</h1>
-    <p>При большом желании можете сделать донатик и тем самым поддержать меня и мое творчество!</p>
+    <p>Если у вас есть желание поддержать меня и порадовать донатом — буду невероятно рада и благодарна! Ваша поддержка дарит вдохновение и мотивирует продолжать творить дальше. 💖</p>
 
-    <!-- Быстрые варианты -->
+    <!-- Быстрые варианты Telegram Stars -->
     <div class="donate-grid">
       <div class="donate-option active" onclick="selectPreset(15, this)">15 ⭐️</div>
       <div class="donate-option" onclick="selectPreset(50, this)">50 ⭐️</div>
@@ -167,10 +216,18 @@
       >
     </div>
 
-    <!-- Кнопка отправки -->
+    <!-- Кнопка оплаты Telegram Stars -->
     <button class="donate-btn" onclick="sendDonate()">
-      Отправить <span id="amount-label">15</span> ⭐️
+      Поддержать за <span id="amount-label">15</span> ⭐️
     </button>
+
+    <!-- Разделитель -->
+    <div class="divider">или картой / другим способом</div>
+
+    <!-- Альтернатива: DonationAlerts -->
+    <a href="https://www.donationalerts.com/r/morika_sims" target="_blank" class="da-btn" onclick="openDA(event)">
+      🧡 Донат через DonationAlerts
+    </a>
   </div>
 
   <script>
@@ -195,7 +252,6 @@
     function onCustomInput(input) {
       const value = parseInt(input.value, 10);
       
-      // Снимаем подсветку с пресетов
       document.querySelectorAll('.donate-option').forEach(el => el.classList.remove('active'));
 
       if (value && value > 0) {
@@ -207,12 +263,11 @@
       }
     }
 
-    // Обновление цифры на кнопке
     function updateLabel(amount) {
       document.getElementById('amount-label').innerText = amount;
     }
 
-    // Отправка доната
+    // Отправка доната в Звёздах
     async function sendDonate() {
       if (!currentAmount || currentAmount < 1) {
         tg.showAlert('Пожалуйста, укажите количество звёзд для доната.');
@@ -222,7 +277,6 @@
       tg.MainButton.setText('Подготовка счёта...').show();
 
       try {
-        // Здесь ваш бэкенд будет возвращать ссылку на оплату createInvoiceLink
         const response = await fetch('YOUR_BACKEND_URL/create-donate-invoice', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -235,7 +289,6 @@
         const data = await response.json();
 
         if (data.invoiceLink) {
-          // Открываем нативную шторку Telegram для оплаты
           tg.openInvoice(data.invoiceLink, (status) => {
             if (status === 'paid') {
               tg.showAlert('Огромное спасибо за поддержку! 💖');
@@ -245,11 +298,16 @@
           });
         }
       } catch (err) {
-        // Демо-уведомление для проверки до подключения бэкенда
-        tg.showAlert(`Форма готова! Пользователь выбрал: ${currentAmount} ⭐️`);
+        tg.showAlert(`Форма готова! Выбрано: ${currentAmount} ⭐️`);
       } finally {
         tg.MainButton.hide();
       }
+    }
+
+    // Безопасное открытие внешних ссылок внутри Telegram
+    function openDA(event) {
+      event.preventDefault();
+      tg.openLink('https://www.donationalerts.com/r/morika_sims');
     }
   </script>
 </body>
