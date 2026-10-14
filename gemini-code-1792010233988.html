@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sims Creative Store</title>
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-color: var(--tg-theme-bg-color, #17212b);
+      --text-color: var(--tg-theme-text-color, #ffffff);
+      --hint-color: var(--tg-theme-hint-color, #7f8c8d);
+      --button-color: var(--tg-theme-button-color, #5288c1);
+      --button-text: var(--tg-theme-button-text-color, #ffffff);
+      --card-bg: var(--tg-theme-secondary-bg-color, #232e3c);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 16px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+
+    /* Категории */
+    .categories {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .category-chip {
+      background: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .category-chip.active {
+      background: var(--button-color);
+      color: var(--button-text);
+    }
+
+    /* Сетка товаров */
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .product-card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .product-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .product-desc {
+      font-size: 12px;
+      color: var(--hint-color);
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .buy-btn {
+      background-color: var(--button-color);
+      color: var(--button-text);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>✨ Sims Store</h1>
+
+  <!-- Фильтр по категориям -->
+  <div class="categories">
+    <button class="category-chip active" onclick="filterCategory('all')">Все</button>
+    <button class="category-chip" onclick="filterCategory('gshade')">GShade</button>
+    <button class="category-chip" onclick="filterCategory('events')">Паки событий</button>
+    <button class="category-chip" onclick="filterCategory('diaries')">Дневники</button>
+  </div>
+
+  <!-- Каталог товаров -->
+  <div class="catalog" id="catalog"></div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // Разворачиваем окно на весь экран
+
+    // Список ваших цифровых товаров
+    const products = [
+      {
+        id: 'gshade_cozy',
+        category: 'gshade',
+        title: 'GShade: Soft Autumn',
+        desc: 'Уютный пресет с теплыми тонами для скриншотов.',
+        price: 50
+      },
+      {
+        id: 'pack_drama',
+        category: 'events',
+        title: 'Пак: Драматические сюжеты',
+        desc: '30 неожиданных поворотов для колеса судьбы.',
+        price: 75
+      },
+      {
+        id: 'diary_dynasty',
+        category: 'diaries',
+        title: 'Интерактивный Дневник Династии',
+        desc: 'Шаблон для трекинга симов и поколений.',
+        price: 100
+      }
+    ];
+
+    function renderProducts(items) {
+      const catalog = document.getElementById('catalog');
+      catalog.innerHTML = '';
+
+      items.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <div>
+            <div class="product-title">${product.title}</div>
+            <div class="product-desc">${product.desc}</div>
+          </div>
+          <button class="buy-btn" onclick="buyProduct('${product.id}')">
+            ${product.price} ⭐️
+          </button>
+        `;
+        catalog.appendChild(card);
+      });
+    }
+
+    function filterCategory(category) {
+      document.querySelectorAll('.category-chip').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (category === 'all') {
+        renderProducts(products);
+      } else {
+        renderProducts(products.filter(p => p.category === category));
+      }
+    }
+
+    // Обработка покупки
+    async function buyProduct(productId) {
+      tg.MainButton.setText('Генерация счета...').show();
+
+      try {
+        // Запрос к вашему бэкенду за ссылкой на инвойс
+        const response = await fetch('YOUR_BACKEND_URL/create-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: productId,
+            initData: tg.initData // Передаем данные авторизации Telegram
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.invoiceLink) {
+          // Открываем шторку оплаты Telegram Stars
+          tg.openInvoice(data.invoiceLink, (status) => {
+            if (status === 'paid') {
+              tg.showAlert('Успешно! Ваш файл или доступ разблокирован.');
+            } else if (status === 'cancelled') {
+              tg.showAlert('Оплата отменена.');
+            }
+          });
+        }
+      } catch (err) {
+        tg.showAlert('Ошибка при создании счета.');
+      } finally {
+        tg.MainButton.hide();
+      }
+    }
+
+    // Первичная отрисовка
+    renderProducts(products);
+  </script>
+</body>
+</html>
